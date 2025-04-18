@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="checkout-container">
+    <h1>Checkout</h1>
+
+    <div class="cart-summary">
+        <h2>Your Cart</h2>
+        <table class="cart-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item_id, cart_entry in cart_items.items %}
+                <tr>
+                    <td>{{ cart_entry.item.name }}</td>
+
+                    <td>
+                        <form method="POST" action="{% url 'update_cart_quantity' %}" style="display:inline-flex; align-items:center;">
+                            {% csrf_token %}
+                            <input type="hidden" name="item_id" value="{{ item_id }}">
+                            <button type="submit" name="action" value="decrease" class="qty-btn">−</button>
+                            <span style="margin: 0 10px;">{{ cart_entry.quantity }}</span>
+                            <button type="submit" name="action" value="increase" class="qty-btn">+</button>
+                        </form>
+                    </td>
+
+                    <td>₹{{ cart_entry.item.price }}</td>
+                    <td>₹{{ cart_entry.total_price|floatformat:2 }}</td>
+                    <td>
+                        <a href="{% url 'remove_from_cart' item_id=item_id %}" class="remove-button">Remove</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">Your cart is empty.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <p class="total-price">Total: ₹{{ total_price|floatformat:2 }}</p>
+    </div>
+
+    <div class="checkout-actions">
+        {% if user.is_authenticated %}
+            <form method="POST" action="{% url 'checkout' %}">
+                {% csrf_token %}
+                <button type="submit" class="confirm-btn">Place Order</button>
+            </form>
+        {% else %}
+            <a href="{% url 'login' %}?next={% url 'cart' %}" class="confirm-btn">Login to Place Order</a>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

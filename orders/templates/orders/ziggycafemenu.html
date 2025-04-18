@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="ziggy-menu-page">
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="title">Ziggy Café Menu</h1>
+            <div class="search-bar">
+                <form method="GET" action="" style="display: flex; gap: 10px;">
+                    <input type="text" name="q" placeholder="Search menu..." value="{{ query }}" class="search-input">
+                    <button type="submit" class="search-btn"><i class="fas fa-search"></i></button>
+                </form>
+                <div class="filter-buttons">
+                    <form method="GET" action="">
+                        <input type="hidden" name="is_veg" value="veg">
+                        <input type="hidden" name="q" value="{{ query }}">
+                        <button type="submit" class="filter-btn veg {% if is_veg == 'veg' %}active{% endif %}">Veg</button>
+                    </form>
+                    <form method="GET" action="">
+                        <input type="hidden" name="is_veg" value="non-veg">
+                        <input type="hidden" name="q" value="{{ query }}">
+                        <button type="submit" class="filter-btn non-veg {% if is_veg == 'non-veg' %}active{% endif %}">Non-Veg</button>
+                    </form>
+                    <form method="GET" action="">
+                        <input type="hidden" name="is_veg" value="all">
+                        <input type="hidden" name="q" value="{{ query }}">
+                        <button type="submit" class="filter-btn all {% if is_veg == 'all' or not is_veg %}active{% endif %}">All</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="menu-section">
+        {% for category, items in categorized_menu.items %}
+            <div class="menu-category">
+                <h2 class="category-title">{{ category }}</h2>
+                <div class="menu-category-grid">
+                    {% for item in items %}
+                        <div class="menu-card">
+                            <img src="{{ item.image_url|default:'https://via.placeholder.com/300x200' }}" alt="{{ item.name }}">
+                            <div class="menu-card-content">
+                                <h3>{{ item.name }}</h3>
+                                <p>{{ item.description }}</p>
+                                <p class="price">₹{{ item.price }}</p>
+                                <p class="veg-status {{ item.is_veg|yesno:'veg,non-veg' }}">{{ item.is_veg|yesno:"Veg,Non-Veg" }}</p>
+                                <form method="POST" action="" class="add-to-cart-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="item_id" value="{{ item.id }}">
+                                    <button type="submit" class="add-to-cart-btn">Add to Cart</button>
+                                </form>                                
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% empty %}
+            <p>No items found.</p>
+        {% endfor %}
+    </section>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function () {
+    $(".add-to-cart-form").on("submit", function (e) {
+        e.preventDefault();
+        const form = $(this);
+        const itemId = form.find("input[name='item_id']").val();
+
+        $.ajax({
+            url: "{% url 'ziggy_cafe_menu' %}",
+            method: "POST",
+            data: {
+                'item_id': itemId,
+                'csrfmiddlewaretoken': '{{ csrf_token }}',
+                'ajax': 'true',
+            },
+            success: function (response) {
+                alert(response.message);  // you can enhance with toast later
+                // Optionally update cart count here
+            },
+            error: function () {
+                alert("Error adding to cart.");
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+
